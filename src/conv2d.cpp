@@ -33,6 +33,8 @@ cnn::Tensor cnn::Conv2D::forward(const Tensor& input) const {
     size_type H_out = std::floor((H_in + 2 * padding_ - kernel_size_) / stride_) + 1;
     size_type W_out = std::floor((W_in + 2 * padding_ - kernel_size_) / stride_) + 1;
     Tensor output({N, out_channels_, H_out, W_out});
+    if (H_in + 2 * padding_ < kernel_size_ || W_in + 2 * padding_ < kernel_size_)
+        throw std::invalid_argument("Conv2D: input too small for kernel/padding.");
 
     // 滑窗卷积：对每个输出位置累加「输入窗口 · 权重」点积
     for (size_type n = 0; n < N; ++n) {
