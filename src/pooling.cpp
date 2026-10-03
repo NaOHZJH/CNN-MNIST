@@ -1,9 +1,10 @@
 // src/pooling.cpp
 
 #include "cnn/pooling.h"
-#include <limits>
-#include <algorithm>
-#include <stdexcept>
+
+#include <algorithm>  // std::max
+#include <limits>     // std::numeric_limits
+#include <stdexcept>  // std::invalid_argument
 
 cnn::MaxPool2D::MaxPool2D(size_type pool_size, size_type stride, size_type padding) : 
     pool_size_(pool_size), stride_(stride), padding_(padding) {
