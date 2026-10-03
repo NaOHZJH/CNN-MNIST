@@ -1,4 +1,4 @@
-// src/flatten.h
+// src/flatten.cpp
 
 #include "cnn/flatten.h"
 
