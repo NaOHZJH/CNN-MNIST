@@ -18,6 +18,7 @@
 #include "cnn/loss.h"
 #include "cnn/optimizer.h"
 #include "cnn/dataset.h"
+#include "cnn/model_io.h"
 
 namespace {
 
@@ -164,6 +165,16 @@ void Trainer::start() {
                             .arg(valAcc * 100.0, 0, 'f', 2)
                             .arg(secs, 0, 'f', 1));
         emit epochFinished(ep, cfg_.epochs, avgLoss, valAcc, secs, pred, truth);
+    }
+
+    // 导出模型参数（方案 A）。空路径表示跳过；即使中途停止也导出当前权重。
+    if (!cfg_.modelPath.isEmpty()) {
+        try {
+            save_model(net, cfg_.modelPath.toStdString());
+            emit logMessage(QStringLiteral("模型已导出到 %1").arg(cfg_.modelPath));
+        } catch (const std::exception& e) {
+            emit logMessage(QStringLiteral("模型导出失败：%1").arg(QString::fromUtf8(e.what())));
+        }
     }
 
     emit finished();

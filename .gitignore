@@ -3,3 +3,6 @@ docs/
 
 # 构建输出目录
 build/
+
+# 模型文件
+model.bin

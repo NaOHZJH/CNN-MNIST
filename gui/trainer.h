@@ -20,6 +20,7 @@ public:
         size_t batchSize = 32;
         int    epochs    = 5;
         float  lr        = 0.01f;
+        QString modelPath = QStringLiteral("model.bin");  // 训练结束后导出；空串则不导出
     };
 
     explicit Trainer(QObject* parent = nullptr);

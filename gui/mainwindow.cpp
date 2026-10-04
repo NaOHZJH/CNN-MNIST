@@ -4,12 +4,14 @@
 #include "plotwidget.h"
 #include "digitwidget.h"
 #include "trainer.h"
+#include "predictwindow.h"
 
 #include <QDoubleSpinBox>
 #include <QGroupBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QThread>
@@ -62,6 +64,14 @@ void MainWindow::buildUi() {
     grid->addWidget(startBtn_, 1, 2);
     grid->addWidget(stopBtn_, 1, 3);
 
+    // 导出模型路径 + 打开预测窗口
+    grid->addWidget(new QLabel(QStringLiteral("导出模型路径")), 2, 0);
+    modelPathEdit_ = new QLineEdit(QStringLiteral("model.bin"));
+    modelPathEdit_->setPlaceholderText(QStringLiteral("留空则不导出"));
+    grid->addWidget(modelPathEdit_, 2, 1, 1, 4);
+    predictBtn_ = new QPushButton(QStringLiteral("打开预测窗口"));
+    grid->addWidget(predictBtn_, 2, 5);
+
     root->addWidget(ctrl);
 
     // ---- 状态栏 ----
@@ -88,6 +98,7 @@ void MainWindow::buildUi() {
 
     connect(startBtn_, &QPushButton::clicked, this, &MainWindow::startTraining);
     connect(stopBtn_, &QPushButton::clicked, this, &MainWindow::stopTraining);
+    connect(predictBtn_, &QPushButton::clicked, this, &MainWindow::openPredict);
 }
 
 void MainWindow::startTraining() {
@@ -118,6 +129,7 @@ void MainWindow::startTraining() {
     cfg.batchSize = size_t(batchSpin_->value());
     cfg.epochs    = epochsSpin_->value();
     cfg.lr        = float(lrSpin_->value());
+    cfg.modelPath = modelPathEdit_->text().trimmed();
     trainer_->setConfig(cfg);
 
     thread_ = new QThread(this);
@@ -159,4 +171,15 @@ void MainWindow::onTrainingFinished() {
     startBtn_->setEnabled(true);
     stopBtn_->setEnabled(false);
     statusLabel_->setText(statusLabel_->text() + QStringLiteral("   —— 训练结束。"));
+}
+
+void MainWindow::openPredict() {
+    if (!predictWin_) {
+        predictWin_ = new PredictWindow;
+        predictWin_->setAttribute(Qt::WA_DeleteOnClose);
+        connect(predictWin_, &QObject::destroyed, this, [this] { predictWin_ = nullptr; });
+    }
+    predictWin_->show();
+    predictWin_->raise();
+    predictWin_->activateWindow();
 }

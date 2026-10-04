@@ -8,10 +8,12 @@ class QLabel;
 class QPushButton;
 class QSpinBox;
 class QDoubleSpinBox;
+class QLineEdit;
 class PlotWidget;
 class DigitWidget;
 class Trainer;
 class QThread;
+class PredictWindow;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -25,6 +27,7 @@ private slots:
                          double seconds, int pred, int truth);
     void onLogMessage(const QString& msg);
     void onTrainingFinished();
+    void openPredict();
 
 private:
     void buildUi();
@@ -37,6 +40,8 @@ private:
     QDoubleSpinBox* lrSpin_ = nullptr;
     QPushButton* startBtn_ = nullptr;
     QPushButton* stopBtn_ = nullptr;
+    QLineEdit* modelPathEdit_ = nullptr;
+    QPushButton* predictBtn_ = nullptr;
     QLabel* statusLabel_ = nullptr;
     PlotWidget* lossPlot_ = nullptr;
     PlotWidget* accPlot_ = nullptr;
@@ -45,4 +50,7 @@ private:
     // 训练线程（每次「开始」都新建一对，训练结束自动销毁）
     QThread* thread_ = nullptr;
     Trainer* trainer_ = nullptr;
+
+    // 独立的预测窗口（按需创建，关闭后自动销毁）
+    PredictWindow* predictWin_ = nullptr;
 };
