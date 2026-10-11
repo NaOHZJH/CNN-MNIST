@@ -10,18 +10,19 @@
 
 ## 特性
 
-| 模块 | 文件 | 说明 |
-|------|------|------|
-| 张量 | `include/cnn/tensor.h` | N 维张量，NCHW 布局、行主序 strides、`matmul`/`transpose`/`softmax` 等 |
-| 卷积层 | `conv2d` | valid/same 卷积，Xavier 初始化，im2col 反向 |
-| 激活层 | `relu` | ReLU（另有 `softmax` 独立层，见下） |
-| 池化层 | `pooling` | MaxPool2D |
-| 展平层 | `flatten` | `[N,C,H,W]` → `[N,C*H*W]`（纯 reshape） |
-| 全连接层 | `dense` | `y = x @ W + b`，Xavier 初始化 |
-| 网络容器 | `network` | 类型擦除的顺序容器，统一驱动 forward/backward |
-| 损失函数 | `loss` | CrossEntropy（**自带数值稳定的 log-softmax**） |
-| 优化器 | `optimizer` | SGD（`w -= lr * grad`） |
-| 数据加载 | `dataset` | Kaggle 格式 MNIST CSV 加载器 |
+| 模块     | 头文件（相对 `include/cnn/`） | 说明                                                                   |
+| -------- | ---------------------------- | ---------------------------------------------------------------------- |
+| 张量     | `core/tensor.h`              | N 维张量，NCHW 布局、行主序 strides、`matmul`/`transpose`/`softmax` 等 |
+| 卷积层   | `layers/conv2d.h`            | valid/same 卷积，Xavier 初始化，im2col 反向                            |
+| 激活层   | `layers/relu.h`              | ReLU（另有 `layers/softmax.h` 独立层）                                 |
+| 池化层   | `layers/pooling.h`           | MaxPool2D                                                              |
+| 展平层   | `layers/flatten.h`           | `[N,C,H,W]` → `[N,C*H*W]`（纯 reshape）                                |
+| 全连接层 | `layers/dense.h`             | `y = x @ W + b`，Xavier 初始化                                         |
+| 网络容器 | `core/network.h`             | 类型擦除的顺序容器，统一驱动 forward/backward                          |
+| 损失函数 | `training/loss.h`            | CrossEntropy（**自带数值稳定的 log-softmax**）                         |
+| 优化器   | `training/optimizer.h`       | SGD（`w -= lr * grad`）                                                |
+| 数据加载 | `data/dataset.h`             | Kaggle 格式 MNIST CSV 加载器                                           |
+| 模型读写 | `io/model_io.h`              | 保存 / 加载网络参数                                                    |
 
 > 注意：`CrossEntropy` 内部已包含 softmax，因此训练网络末尾**不要再接 `Softmax` 层**（否则会做两次 softmax）。
 
@@ -30,55 +31,111 @@
 ## 目录结构
 
 ```
-CNN/
-├── CMakeLists.txt          # 构建脚本（libcnn 静态库 + 多个可执行目标）
-├── include/cnn/            # 头文件（层 / 张量 / 网络 / 损失 / 优化器 / 数据）
-├── src/                    # 实现文件
-│   ├── main.cpp            # 前向传播演示（cnn_demo）
-│   └── mnist_test.cpp      # 控制台训练 / 测试程序（mnist_test）
-├── gui/                    # Qt6 可视化程序（mnist_gui）
-│   ├── main.cpp
-│   ├── mainwindow.*        # 主窗口（参数面板 + 曲线图 + 样本预览）
-│   ├── trainer.*           # 后台训练线程（QThread 工作线程）
-│   ├── plotwidget.*        # QPainter 手绘折线图（不依赖 Qt Charts）
-│   └── digitwidget.*       # 28×28 样本显示 + 预测/真实标签
-└── data/                   # 数据集（Kaggle CSV，见下）
+CNN-MNIST/
+├── CMakeLists.txt                 # 核心库与控制台构建配置，引入 GUI 子构建
+├── CMakePresets.json              # 可共享的构建基础配置
+├── CMakeUserPresets.json.template # 本机 Qt / MinGW / Ninja 配置参考
+├── CMakeUserPresets.json          # 本机 Debug、Release 预设（Git 忽略）
+├── .vscode/                       # CMake、IntelliSense、构建任务及 GDB 调试配置
+├── include/cnn/                   # 核心库公共头文件
+│   ├── core/                     # tensor.h、network.h
+│   ├── layers/                   # conv2d / dense / flatten / pooling / relu / softmax
+│   ├── training/                 # loss.h、optimizer.h
+│   ├── data/                     # dataset.h
+│   └── io/                       # model_io.h
+├── src/                           # 实现文件，与公共头文件按相同模块分组
+│   ├── core/
+│   ├── layers/
+│   ├── training/
+│   ├── data/
+│   ├── io/
+│   ├── main.cpp                  # 前向传播演示（cnn_demo）
+│   └── mnist_test.cpp            # 训练 / 评估 / 模型导出（mnist_test）
+├── gui/                           # Qt6 可视化程序（mnist_gui）
+│   ├── CMakeLists.txt             # GUI 子构建配置（由根目录 add_subdirectory 引入）
+│   ├── include/                   # GUI 头文件，按职责分组
+│   │   ├── windows/              # mainwindow.h、predictwindow.h：主窗口与预测窗口
+│   │   ├── widgets/              # digitwidget.h、plotwidget.h：数字显示与曲线控件
+│   │   └── training/             # trainer.h：后台训练工作对象
+│   └── src/                       # 与 GUI 头文件按相同职责分组
+│       ├── windows/
+│       ├── widgets/
+│       ├── training/
+│       └── main.cpp              # Qt 应用入口
+└── data/                          # 数据集（Kaggle CSV，见下）
 ```
+
+查找一个模块时，先在 `include/cnn/<模块>/` 阅读接口，再到 `src/<模块>/`
+查看同名实现；GUI 的 `include/` 与 `src/` 也采用相同分组。
+头文件引用包含模块名，例如 `#include "cnn/layers/conv2d.h"`、
+`#include "widgets/plotwidget.h"`。核心库与 GUI 使用递归源码收集，新增文件会
+自动纳入源码列表；移动文件后重新运行 CMake 配置，以刷新 IntelliSense。
 
 ---
 
 ## 环境要求
 
-- **编译器**：g++ 14.2（本机为 MSYS2 UCRT64，`C:\msys64\ucrt64\bin`）
-- **CMake** ≥ 3.16（本机用 VS 2022 自带，或 MSYS2 内安装）
-- **构建工具**：`mingw32-make`（MinGW Makefiles 生成器）
-- **Qt6**（可选，仅构建可视化程序时需要）：Qt 6.12.0 mingw_64
+- **Qt6 Widgets** 与配套的 **MinGW** 编译器
+- **CMake** ≥ 3.21，需要能通过 `cmake` 命令调用
+- **Ninja** 构建工具
+
+本机路径集中在 `CMakeUserPresets.json`，该文件已加入 `.gitignore`。
+CMake 和 VS Code CMake Tools 会自动读取它，并将预设中的环境变量传给配置、构建进程。
 
 ---
 
 ## 构建
 
-### 1) 控制台训练程序
+### 1) 使用本机 Qt 预设
+
+首次使用时复制参考模板，按实际安装位置修改 `environment` 中的
+`QT_ROOT`、`MINGW_ROOT` 和 `NINJA_ROOT`，路径使用 `/`：
 
 ```bash
-cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-mingw32-make -C build mnist_test
+cp CMakeUserPresets.json.template CMakeUserPresets.json
 ```
 
-> 若 `cmake` / `mingw32-make` 不在 PATH，请使用完整路径，例如
-> `C:\msys64\ucrt64\bin\mingw32-make.exe`。
-
-### 2) Qt6 可视化程序（可选）
-
-构建时指定 Qt 安装路径：
+模板会从这三个目录生成编译器、Qt、Ninja、GDB 和运行库路径。
+已有本机配置时直接编辑 `CMakeUserPresets.json`，无需再次复制。
 
 ```bash
-cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_PREFIX_PATH=C:/Qt/6.12.0/mingw_64
-mingw32-make -C build mnist_gui
+# Release：构建核心库、两个控制台程序和 Qt GUI
+cmake --preset qt-mingw-release
+cmake --build --preset qt-mingw-release --parallel
+
+# Debug：供 GDB / VS Code 调试
+cmake --preset qt-mingw-debug
+cmake --build --preset qt-mingw-debug --parallel
 ```
 
-> `find_package(Qt6 QUIET ...)` 未找到 Qt 时会自动跳过该目标，不影响其余构建。
+输出分别位于 `build/qt-mingw-release/` 和 `build/qt-mingw-debug/`。
+GUI 构建后会自动调用这套 Qt 的 `windeployqt`，将 Qt DLL、`platforms/qwindows.dll`
+及 MinGW 运行库部署到程序旁；无需手动复制 DLL。
+这套 Qt 只提供 Release 库，Debug 应用也使用这些库，部署工具会根据实际依赖判断。
+如需自行管理运行库，可在配置时传入 `-DCNN_DEPLOY_QT=OFF`。
+
+### 2) VS Code
+
+安装 **CMake Tools** 和 **C/C++** 扩展，打开项目后通过
+`CMake: Select Configure Preset` 选择 `qt-mingw-debug` 或 `qt-mingw-release`。
+C/C++ 的头文件路径和宏由 CMake Tools 提供，配置成功后可识别 Qt 头文件和生成的 MOC 文件。
+
+首次调试前先完成一次 `qt-mingw-debug` 配置；调试器和运行库目录会从 CMake 缓存读取。
+按 `Ctrl+Shift+B` 构建 Debug；选择 `MNIST Qt GUI (Debug)` 后按 `F5`，
+会先配置并构建，再用配套 GDB 启动 GUI。调试工作目录为项目根目录，以便读取 `data/`。
+
+### 3) 仅构建控制台程序 / 其他机器
+
+GUI 默认启用，Qt 未找到时会明确报错。无需 Qt 时可关闭 GUI：
+
+```bash
+cmake -S . -B build/console -G Ninja -DCMAKE_BUILD_TYPE=Release -DCNN_BUILD_GUI=OFF
+cmake --build build/console --parallel
+```
+
+其他机器可复制模板建立自己的 `CMakeUserPresets.json`，或直接使用
+`cmake -S . -B <新构建目录> -DCMAKE_PREFIX_PATH=<Qt目录> -DCMAKE_CXX_COMPILER=<匹配编译器>`。
+切换编译器 / 生成器时应使用新的构建目录，避免旧 CMake 缓存冲突。
 
 ---
 
@@ -86,22 +143,25 @@ mingw32-make -C build mnist_gui
 
 **都在项目根目录下运行**（数据使用相对路径 `data/train.csv`）：
 
-```bash
+```powershell
 # 控制台训练（默认：10000 训练 + 2000 验证，5 轮）
-./build/mnist_test.exe
+./build/qt-mingw-release/mnist_test.exe
 
 # 前向传播演示
-./build/cnn_demo.exe
+./build/qt-mingw-release/cnn_demo.exe
 
 # 可视化程序
-./build/mnist_gui.exe
+./build/qt-mingw-release/mnist_gui.exe
 ```
 
-`mnist_gui.exe` 若无法启动（提示缺少 Qt DLL），可任选其一：
+预设的 PATH 只作用于配置、构建进程，不会修改当前终端。
+运行控制台程序时，如 PATH 中存在其他 MinGW，可从本机预设读取匹配的运行库目录：
 
-1. 临时把 Qt bin 加入 PATH：`export PATH="/c/Qt/6.12.0/mingw_64/bin:$PATH"`；
-2. 或用 `windeployqt` 把 Qt DLL 部署到 exe 旁，并补齐 MSYS2 运行库
-   `libstdc++-6.dll`、`libgcc_s_seh-1.dll`、`libwinpthread-1.dll`（来自 `C:\msys64\ucrt64\bin`）。
+```powershell
+$localPreset = Get-Content CMakeUserPresets.json -Raw | ConvertFrom-Json
+$toolPaths = ($localPreset.configurePresets | Where-Object name -eq 'qt-mingw-local').environment
+$env:PATH = "$($toolPaths.MINGW_ROOT)/bin;$($toolPaths.QT_ROOT)/bin;$env:PATH"
+```
 
 ---
 
@@ -128,10 +188,10 @@ mingw32-make -C build mnist_gui
 
 数据为 **Kaggle MNIST CSV**（`data/` 目录）：
 
-| 文件 | 形状 | 说明 |
-|------|------|------|
+| 文件        | 形状        | 说明                                          |
+| ----------- | ----------- | --------------------------------------------- |
 | `train.csv` | 42000 × 785 | 首列 `label`（0–9），其后 784 个像素（0–255） |
-| `test.csv` | 28000 × 784 | 仅 784 个像素，无标签 |
+| `test.csv`  | 28000 × 784 | 仅 784 个像素，无标签                         |
 
 加载器 `cnn::load_mnist_csv(path, has_label, max_rows)` 会把像素除以 255 归一化到 `[0, 1]`。
 
@@ -149,11 +209,11 @@ epoch 4/5  loss = 0.3157  val_acc = 88.05%
 epoch 5/5  loss = 0.2720  val_acc = 92.15%
 ```
 
-约 36 秒 / 轮。可在 `src/mnist_test.cpp` 的 `main()` 顶部调整 `train_size` / `val_size` / `batch_size` / `epochs` / `lr` 等参数。
+约 36 秒 / 轮。可在 `src/mnist_test.cpp` 的匿名命名空间中调整 `kTrainSize` / `kValSize` / `kBatchSize` / `kEpochs` / `kLr` 等参数。
 
 ---
 
 ## 注意事项
 
-- **文件读取请用 C 标准库，勿用 `std::ifstream`**：本机 g++ 14.2（MSYS2 UCRT64）在 `-O1` 及以上优化级别下会错误编译 `std::ifstream`，导致运行时段错误。`src/dataset.cpp` 已改用 `fopen` / `fgets` / `strtof` 绕开该问题。
+- **数据文件读取使用 C 标准库**：旧 MSYS2 UCRT64 g++ 14.2 环境下曾出现 `std::ifstream` 优化后运行异常，`src/data/dataset.cpp` 使用 `fopen` / `fgets` / `strtof`。
 - 训练样本/验证样本从 `train.csv` 前 `train_size + val_size` 行切分，未使用 `test.csv`（该文件无标签，用于提交预测）。

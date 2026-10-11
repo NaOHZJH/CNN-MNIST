@@ -1,0 +1,12 @@
+{
+  "cmake.cmakePath": "cmake",
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": true,
+  "cmake.debugConfig": {
+    "cwd": "${workspaceFolder}",
+    "MIMode": "gdb"
+  },
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.intelliSenseMode": "windows-gcc-x64"
+}

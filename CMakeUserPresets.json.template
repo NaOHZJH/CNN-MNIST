@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "qt-mingw-local",
+      "hidden": true,
+      "inherits": "qt-mingw",
+      "environment": {
+        "QT_ROOT": "Directory of the Qt version used",
+        "MINGW_ROOT": "Directory of the mingw used",
+        "NINJA_ROOT": "Directory of the ninja used",
+        "PATH": "$env{MINGW_ROOT}/bin;$env{QT_ROOT}/bin;$penv{PATH}"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "$env{MINGW_ROOT}/bin/g++.exe",
+        "CMAKE_MAKE_PROGRAM": "$env{NINJA_ROOT}/ninja.exe",
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT}",
+        "Qt6_DIR": "$env{QT_ROOT}/lib/cmake/Qt6",
+        "CNN_GDB_PATH": "$env{MINGW_ROOT}/bin/gdb.exe",
+        "CNN_RUNTIME_DIRECTORIES": "$env{MINGW_ROOT}/bin;$env{QT_ROOT}/bin"
+      }
+    },
+    {
+      "name": "qt-mingw-debug",
+      "displayName": "Local Qt / MinGW Debug",
+      "inherits": "qt-mingw-local",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "qt-mingw-release",
+      "displayName": "Local Qt / MinGW Release",
+      "inherits": "qt-mingw-local",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "qt-mingw-debug",
+      "configurePreset": "qt-mingw-debug"
+    },
+    {
+      "name": "qt-mingw-release",
+      "configurePreset": "qt-mingw-release"
+    }
+  ]
+}
