@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake: configure Qt Debug",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--preset", "qt-mingw-debug"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake: build Qt Debug",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--build", "--preset", "qt-mingw-debug", "--parallel"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "CMake: configure Qt Debug",
+      "problemMatcher": ["$gcc"],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "CMake: configure Qt Release",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--preset", "qt-mingw-release"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake: build Qt Release",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--build", "--preset", "qt-mingw-release", "--parallel"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "CMake: configure Qt Release",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    }
+  ]
+}

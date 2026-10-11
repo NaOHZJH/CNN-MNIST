@@ -3,6 +3,7 @@ docs/
 
 # 构建输出目录
 build/
+CMakeUserPresets.json
 
 # 模型文件
 model.bin

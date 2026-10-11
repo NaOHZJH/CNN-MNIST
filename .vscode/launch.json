@@ -1,0 +1,70 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "MNIST Qt GUI (Debug)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/qt-mingw-debug/mnist_gui.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "${input:cnn.gdbPath}",
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${input:cnn.runtimeDirectories};${env:PATH}"
+        }
+      ],
+      "setupCommands": [
+        {
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "CMake: build Qt Debug"
+    },
+
+    {
+      "name": "MNIST Qt GUI (Release)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/qt-mingw-release/mnist_gui.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "${input:cnn.gdbPath}",
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "${input:cnn.runtimeDirectories};${env:PATH}"
+        }
+      ],
+      "setupCommands": [
+        {
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "CMake: build Qt Release"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "cnn.gdbPath",
+      "type": "command",
+      "command": "cmake.cacheVariable",
+      "args": { "name": "CNN_GDB_PATH" }
+    },
+    {
+      "id": "cnn.runtimeDirectories",
+      "type": "command",
+      "command": "cmake.cacheVariable",
+      "args": { "name": "CNN_RUNTIME_DIRECTORIES" }
+    }
+  ]
+}
