@@ -7,3 +7,6 @@ CMakeUserPresets.json
 
 # 模型文件
 model.bin
+
+# 日志文件
+*.log
